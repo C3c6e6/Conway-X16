@@ -8,7 +8,7 @@ Conway's Game of Life demo for the Commander X16, written in 65c02 assembly
 
 ## Building
 
-You will need the [cc65 compiler and assembler|https://github.com/cc65/cc65] installed to build the program as well as GNU Make. Just type
+You will need the [cc65 compiler and assembler](https://github.com/cc65/cc65) installed to build the program as well as GNU Make. Just type
 ```
 make
 ```
