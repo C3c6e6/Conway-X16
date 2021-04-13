@@ -40,7 +40,7 @@
 .endscope
 .endmacro
 
-; TODO: include bank bit
+; does not set the bank bit
 .macro set_vera_address address ; overwrites A
 .scope
     VERA_ADDRESS_REGISTER = $9F20
@@ -121,6 +121,13 @@ loop:
 .endscope
 .endmacro
 
+; The cell grid displayed on the screen is 80 columns x 60 rows. To simplify the
+; code, we add a border of cells that are always dead around this initial grid,
+; resulting in a buffer of 82 x 62. 
+; In each byte, the least significant bit indicates the cell status, 1 = alive,
+; 0 = dead. The 4 highest bits will be used later on to store the number of live
+; neighbours for each cell. This macro here simply initialises the buffer with
+; 0s and creates a border pattern of live cells. 
 .macro init_buffer ; Overwrites A, X, Y, $02-$03
 .scope
    ; fill buffer with 0s
@@ -176,6 +183,7 @@ fill_bottom_row:
 .endscope
 .endmacro
 
+; Transfers the cell grid buffer to the video buffer. 
 .macro transfer_buffer ; overwrites A, X, Y, $02-$05
 .scope
    current_cell = $02
@@ -216,6 +224,8 @@ column_loop:
 .endscope
 .endmacro
 
+; Stores the number of live neighbours of each cell in the 4 highest bits of
+; that cell
 .macro count_neighbours ; overwrites A, X, Y, $02-$04
 .scope
    bra start
@@ -273,6 +283,8 @@ count_loop:
 .endscope
 .endmacro
 
+; Updates the status of each cell (live or dead) after we have counted the
+; number of live neighbours.
 .macro update_buffer ; overwrites A, X, Y, $02-$03
 .scope
    current_row = $02
@@ -318,6 +330,7 @@ Q_CHAR         = $51
 
 jmp start
 
+; Data for the tiles indicating dead or live cells.
 tiles:
 empty_tile:
     .byte %10000000
