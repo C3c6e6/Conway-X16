@@ -358,10 +358,8 @@ start:
    init_buffer
 main_loop:
    transfer_buffer
-@key_loop:
+   wai
    jsr GETIN
-   cmp #0
-   beq @key_loop
    cmp #Q_CHAR
    bne @continue
    jmp end

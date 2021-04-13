@@ -4,7 +4,7 @@ Conway's Game of Life demo for the Commander X16, written in 65c02 assembly
 ## Running
 
 * To run, load the binary in the X16 emulator and type "RUN"
-* Press any key to move to the next frame, press 'Q' to quit
+* Press 'Q' to quit
 
 ## Building
 
