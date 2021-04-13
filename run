@@ -1,0 +1,7 @@
+#!/bin/bash
+
+options="-scale 2"
+program=$1
+shift
+
+x16emu $options -prg $program $@ 
