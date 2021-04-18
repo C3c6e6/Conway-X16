@@ -106,6 +106,16 @@
 .endscope
 .endmacro
 
+.macro set_scale scaling_factor
+.scope
+   VERA_H_SCALE = $9F2A
+   VERA_V_SCALE = $9F2B
+   lda #128 >> (scaling_factor-1)
+   sta VERA_H_SCALE
+   sta VERA_V_SCALE
+.endscope
+.endmacro
+
 .macro copy_tiles ; Overwrites A, X
 .scope
    set_vera_port 0
@@ -321,8 +331,9 @@ continue:
 
 VERA_data_0 = $9F23
 
-COLUMNS = 80
-ROWS    = 60
+SCALE_FACTOR = 1
+COLUMNS = 80 / SCALE_FACTOR
+ROWS    = 60 / SCALE_FACTOR
 
 AMBER_ON_BLACK = $08
 GETIN          = $FFE4
@@ -354,6 +365,7 @@ tile_end:
 
 
 start:
+   set_scale SCALE_FACTOR
    copy_tiles
    init_buffer
 main_loop:
