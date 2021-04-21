@@ -14,6 +14,7 @@ ROWS    = 60 / SCALE_FACTOR
 GETIN          = $FFE4
 Q_CHAR         = $51
 
+; Increments a 16-bit value at the specified address.
 .macro increment_address address ; overwrites A
 .scope
     inc address
@@ -23,6 +24,8 @@ Q_CHAR         = $51
 .endscope
 .endmacro
 
+; Adds the byte value specified by increment to the 16-bit value at the 
+; specified address.
 .macro add_to_address address, increment ; overwrites A, C flag
 .scope
     lda increment
@@ -35,6 +38,7 @@ Q_CHAR         = $51
 .endscope
 .endmacro
 
+; Set the VERA port to be used for reading/writing.
 .macro set_vera_port port ; overwrites A
 .scope
     VERA_CONTROL = $9F25
@@ -50,7 +54,8 @@ Q_CHAR         = $51
 .endscope
 .endmacro
 
-; does not set the bank bit
+; Sets the VERA address for the next read/write operation. Does not set the bank 
+; bit as we are only using bank 0 in this program.
 .macro set_vera_address address ; overwrites A
 .scope
     VERA_ADDRESS_REGISTER = $9F20
@@ -61,6 +66,8 @@ Q_CHAR         = $51
 .endscope
 .endmacro
 
+; Reads an address stored at a zero-page location and sets it as the VERA 
+; address.
 .macro set_vera_address_zp_ptr zp_ptr ; overwrites A
 .scope
     VERA_ADDRESS_REGISTER = $9F20
@@ -71,6 +78,7 @@ Q_CHAR         = $51
 .endscope
 .endmacro
 
+; Convenience macro to set the stride value in the VERA interface.
 .macro set_stride stride ; overwrites A
 .scope
     VERA_HIGH_REGISTER = $9F22
@@ -116,7 +124,9 @@ Q_CHAR         = $51
 .endscope
 .endmacro
 
-.macro set_scale scaling_factor
+; Sets the display scaling factor. The same factor is applied both horizontally 
+; and vertically.
+.macro set_scale scaling_factor  ; Overwrites A
 .scope
    VERA_H_SCALE = $9F2A
    VERA_V_SCALE = $9F2B
@@ -126,6 +136,7 @@ Q_CHAR         = $51
 .endscope
 .endmacro
 
+; Stores the tile definitions into VERA
 .macro copy_tiles ; Overwrites A, X
 .scope
    set_vera_port 0
@@ -141,8 +152,9 @@ loop:
 .endscope
 .endmacro
 
-; initialise the video buffer with the right foreground and background color
-.macro write_color
+; Stores the same foreground and background color in all tiles of the video
+; buffer so that we don't have to do this when updating the screen.
+.macro write_color ; Overwrites A, X, Y
 .scope
    AMBER_ON_BLACK = $08
    set_vera_address $0001
@@ -162,9 +174,10 @@ loop:
 .endscope
 .endmacro
 
-; The cell grid displayed on the screen is 80 columns x 60 rows. To simplify the
-; code, we add a border of cells that are always dead around this initial grid,
-; resulting in a buffer of 82 x 62. 
+; The cell grid displayed on the screen is w=80/s columns wide and h=60/s rows 
+; high where s is the value of SCALE_FACTOR. To simplify the code, we add a 
+; border of cells that are always dead around this initial grid, resulting in 
+; a buffer of (w+2) * (h+2) bytes. 
 ; In each byte, the least significant bit indicates the cell status, 1 = alive,
 ; 0 = dead. The 4 highest bits will be used later on to store the number of live
 ; neighbours for each cell. This macro here simply initialises the buffer with
@@ -382,6 +395,7 @@ full_tile:
 tile_end:    
 
 
+; Main program code
 start:
    set_scale SCALE_FACTOR
    write_color
@@ -401,6 +415,7 @@ main_loop:
 end:
    rts
 
+; Memory locations for the game buffer
 buffer_start: 
 buffer_end = buffer_start + (ROWS + 2) * (COLUMNS + 2)
 top_left = buffer_start + COLUMNS + 2 + 1
