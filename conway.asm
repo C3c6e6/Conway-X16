@@ -4,6 +4,16 @@
 .segment "ONCE"
 .segment "CODE"
 
+jmp start
+
+VERA_data_0 = $9F23
+SCALE_FACTOR = 1
+COLUMNS = 80 / SCALE_FACTOR
+ROWS    = 60 / SCALE_FACTOR
+
+GETIN          = $FFE4
+Q_CHAR         = $51
+
 .macro increment_address address ; overwrites A
 .scope
     inc address
@@ -51,7 +61,7 @@
 .endscope
 .endmacro
 
-.macro set_vera_address_zp_ptr zp_ptr
+.macro set_vera_address_zp_ptr zp_ptr ; overwrites A
 .scope
     VERA_ADDRESS_REGISTER = $9F20
     lda zp_ptr
@@ -131,6 +141,27 @@ loop:
 .endscope
 .endmacro
 
+; initialise the video buffer with the right foreground and background color
+.macro write_color
+.scope
+   AMBER_ON_BLACK = $08
+   set_vera_address $0001
+   set_stride 2
+   lda #AMBER_ON_BLACK
+   ldx #0
+   ldy #0
+loop:
+   sta VERA_data_0
+   inx
+   cpx #128
+   bne loop
+   ldx 0
+   iny
+   cpy #64
+   bne loop  
+.endscope
+.endmacro
+
 ; The cell grid displayed on the screen is 80 columns x 60 rows. To simplify the
 ; code, we add a border of cells that are always dead around this initial grid,
 ; resulting in a buffer of 82 x 62. 
@@ -205,15 +236,13 @@ fill_bottom_row:
    lda #>top_left
    sta current_cell+1
    set_vera_address_zp_ptr vera_address
-   set_stride 1
+   set_stride 2
    ldx #0
 row_loop:
    ldy #0
 column_loop:
    lda (current_cell), y
    and #$01
-   sta VERA_data_0
-   lda #AMBER_ON_BLACK
    sta VERA_data_0
    iny
    cpy #COLUMNS
@@ -238,9 +267,9 @@ column_loop:
 ; that cell
 .macro count_neighbours ; overwrites A, X, Y, $02-$04
 .scope
-   bra start
 SELF_OFFSET = COLUMNS + 2 + 1
 END_ADDRESS = buffer_end - (COLUMNS + 2 + 1)
+   bra start
 offsets:
    .byte 0
    .byte 1
@@ -329,17 +358,6 @@ continue:
 .endscope
 .endmacro
 
-VERA_data_0 = $9F23
-
-SCALE_FACTOR = 1
-COLUMNS = 80 / SCALE_FACTOR
-ROWS    = 60 / SCALE_FACTOR
-
-AMBER_ON_BLACK = $08
-GETIN          = $FFE4
-Q_CHAR         = $51
-
-jmp start
 
 ; Data for the tiles indicating dead or live cells.
 tiles:
@@ -366,6 +384,7 @@ tile_end:
 
 start:
    set_scale SCALE_FACTOR
+   write_color
    copy_tiles
    init_buffer
 main_loop:
@@ -385,3 +404,4 @@ end:
 buffer_start: 
 buffer_end = buffer_start + (ROWS + 2) * (COLUMNS + 2)
 top_left = buffer_start + COLUMNS + 2 + 1
+
